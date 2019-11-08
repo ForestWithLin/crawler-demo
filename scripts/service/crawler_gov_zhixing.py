@@ -36,14 +36,13 @@ class GovZhiXingCrawler:
         self.selectCourtId = '0'
         self.searchCourtName = '全国法院（包含地方各级法院）'
         self.selectCourtArrange = '1'
-        self.currentPage = '1'  # 查询开始页数
+        self.currentPage = 1  # 查询开始页数
         self.httpClint = http_client.HTTPClient()
         self.httpClint.setHeaders(_set_header_default())
         self.urls = copy.copy(url_zhixing.urls)  # 浅拷贝，防止修改了配置文件参数
         logger.info("初始化执行信息网爬虫对象。。。")
 
-    def main(self):
-        self.httpClint
+    def do_main_page(self):
         # 获取查询首页html代码
         mainHtml = self.httpClint.send(self.urls['main'])
         mainSoup = BeautifulSoup(mainHtml, 'html.parser')
@@ -52,7 +51,6 @@ class GovZhiXingCrawler:
         logger.info('获取的captchaId:%s', captchaId)
         logger.info('获取的访问图形验证码Url:%s', imgUrl)
         self.captchaId = captchaId
-
         self.urls['captcha'][
             'req_url'] = self.urls['captcha']['req_url'] + imgUrl
         # 获取验证码图片流
@@ -63,6 +61,9 @@ class GovZhiXingCrawler:
         validCode = api.PredictExtend('30400', imgContent)
         logger.info('获取的图形验证码：%s', validCode)
         self.pCode = validCode
+        self.do_items_page()
+
+    def do_items_page(self):
         # 获取查询列表数据
         qryData = {
             'pName': self.pName,
@@ -74,10 +75,19 @@ class GovZhiXingCrawler:
             'currentPage': self.currentPage,
             'captchaId': self.captchaId
         }
-        resultList = self.httpClint.send(self.urls['doQry'], qryData)
-        print(resultList)
+        listJson = self.httpClint.send(self.urls['doQry'], qryData)
+        items = listJson[0]['result']
+        itemsLen = len(items)
+        logger.info('当前页面：%d,获取列表数量：%d', self.currentPage, itemsLen)
+        if itemsLen <= 0:
+            # 没有下页数据跳出
+            logger.info('无数据')
+            return
+        # 执行翻页操作
+        self.currentPage = self.currentPage + 1
+        self.do_items_page()
 
 
 if __name__ == '__main__':
-    test = GovZhiXingCrawler('王思聪', '', False)
-    text = test.main()
+    text = GovZhiXingCrawler('王思聪', '', False)
+    text.do_main_page()

@@ -41,7 +41,7 @@ urls = {
         "re_time": 1,
         "s_time": 0.1,
         "is_logger": True,
-        "is_json": False,
+        "is_json": True,
     }
 
 }
