@@ -10,16 +10,12 @@ def getNowTimestamp():
 
 def decMakeDir(func):
     """根据判断是否生成文件"""
-    print('1111')
-
     def handleFunc(*args, **kwargs):
         dirname = func(*args, **kwargs)
         print(dirname)
         if not os.path.exists(dirname):
-            print('create file')
             os.makedirs(dirname)
         elif not os.path.isdir(dirname):
-            print('not file')
             pass
 
         return dirname

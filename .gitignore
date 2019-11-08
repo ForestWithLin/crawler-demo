@@ -11,7 +11,7 @@
 /.git/
 /.vscode/
 /_pycache__/
-/tmp/
+scripts/tmp/
 
 # 配置语法：
 # 以斜杠“/”开头表示目录；
