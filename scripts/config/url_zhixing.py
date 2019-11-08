@@ -22,6 +22,7 @@ urls = {
         "Referer": "http://zxgk.court.gov.cn/zhzxgk/",
         "Host": "zxgk.court.gov.cn",
         "Content-Type": 1,
+        "not_decode": True,
         "httpType": "http",
         "re_try": 10,
         "re_time": 1,
@@ -40,7 +41,7 @@ urls = {
         "re_time": 1,
         "s_time": 0.1,
         "is_logger": True,
-        "is_json": True,
+        "is_json": False,
     }
 
 }

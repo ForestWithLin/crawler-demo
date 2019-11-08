@@ -1,28 +1,20 @@
 # coding=utf-8
-import os, sys
-import base64
+
 import hashlib
 import time
-import urllib
-import urllib2
 import json
 import requests
-import string
-reload(sys)
-sys.setdefaultencoding('utf8')
-
-FATEA_PRED_URL = "http://pred.fateadm.com"
+from scripts.config import data_fateadm
 
 
 def LOG(log):
     # 不需要测试时，注释掉日志就可以了
-    print log
+    print(log)
     log = None
 
 
 class TmpObj():
     def __init__(self):
-        self.init = True
         self.value = None
 
 
@@ -38,28 +30,28 @@ class Rsp():
             self.err_msg = "http request failed, get rsp Nil data"
             return
         jrsp = json.loads(rsp_data)
-        self.ret_code = string.atoi(jrsp["RetCode"])
+        self.ret_code = int(jrsp["RetCode"])
         self.err_msg = jrsp["ErrMsg"]
         self.request_id = jrsp["RequestId"]
         if self.ret_code == 0:
             rslt_data = jrsp["RspData"]
             if rslt_data is not None and rslt_data != "":
                 jrsp_ext = json.loads(rslt_data)
-                if jrsp_ext.has_key("cust_val"):
+                if "cust_val" in jrsp_ext:
                     data = jrsp_ext["cust_val"]
-                    self.cust_val = string.atof(data)
-                if jrsp_ext.has_key("result"):
+                    self.cust_val = float(data)
+                if "result" in jrsp_ext:
                     data = jrsp_ext["result"]
                     self.pred_rsp.value = data
 
 
 def CalcSign(pd_id, passwd, timestamp):
     md5 = hashlib.md5()
-    md5.update(timestamp + passwd)
+    md5.update((timestamp + passwd).encode())
     csign = md5.hexdigest()
 
     md5 = hashlib.md5()
-    md5.update(pd_id + timestamp + csign)
+    md5.update((pd_id + timestamp + csign).encode())
     csign = md5.hexdigest()
     return csign
 
@@ -70,36 +62,27 @@ def CalcCardSign(cardid, cardkey, timestamp, passwd):
     return md5.hexdigest()
 
 
-def HttpRequest(url, body_data):
+def HttpRequest(url, body_data, img_data=""):
     rsp = Rsp()
-    post_data = urllib.urlencode(body_data)
-    request = urllib2.Request(url, post_data)
-    request.add_header("User-Agent", "Mozilla/5.0")
-    rsp_data = urllib2.urlopen(request).read()
-    rsp.ParseJsonRsp(rsp_data)
-    return rsp
-
-
-def PostFile(url, data, img_data):
-    rsp = Rsp()
+    post_data = body_data
     files = {'img_data': ('img_data', img_data)}
-    headers = {"User-Agent": "Mozilla/5.0"}
-    r = requests.post(url, data=data, files=files, headers=headers)
-    rsp.ParseJsonRsp(r.text)
+    header = {
+        'User-Agent': 'Mozilla/5.0',
+    }
+    rsp_data = requests.post(url, post_data, files=files, headers=header)
+    rsp.ParseJsonRsp(rsp_data.text)
     return rsp
 
 
 class FateadmApi():
     # API接口调用类
     # 参数（appID，appKey，pdID，pdKey）
-    def __init__(self, app_id, app_key, pd_id, pd_key):
-        self.app_id = app_id
-        if app_id is None:
-            self.app_id = ""
-        self.app_key = app_key
-        self.pd_id = pd_id
-        self.pd_key = pd_key
-        self.host = FATEA_PRED_URL
+    def __init__(self):
+        self.app_id = data_fateadm.fateadmData['app_id']
+        self.app_key = data_fateadm.fateadmData['app_key']
+        self.pd_id = data_fateadm.fateadmData['pd_id']
+        self.pd_key = data_fateadm.fateadmData['pd_key']
+        self.host = data_fateadm.fateadmData['pred_url']
 
     def SetHost(self, url):
         self.host = url
@@ -131,7 +114,6 @@ class FateadmApi():
     # 参数：pred_type:识别类型
     # 返回值：
     #   rsp.ret_code：正常返回0
-    #   rsp.request_id：唯一的订单号
     #   rsp.err_msg： 异常时返回异常详情
     #
     def QueryTTS(self, pred_type):
@@ -167,7 +149,7 @@ class FateadmApi():
     #   rsp.pred_rsp.value：识别结果
     #   rsp.err_msg：异常时返回异常详情
     #
-    def Predict(self, pred_type, img_data):
+    def Predict(self, pred_type, img_data, head_info=""):
         tm = str(int(time.time()))
         sign = CalcSign(self.pd_id, self.pd_key, tm)
         param = {
@@ -177,6 +159,8 @@ class FateadmApi():
             "predict_type": pred_type,
             "up_type": "mt"
         }
+        if head_info is not None or head_info != "":
+            param["head_info"] = head_info
         if self.app_id != "":
             #
             asign = CalcSign(self.app_id, self.app_key, tm)
@@ -184,15 +168,15 @@ class FateadmApi():
             param["asign"] = asign
         url = self.host + "/api/capreg"
         files = img_data
-        rsp = PostFile(url, param, files)
+        rsp = HttpRequest(url, param, files)
         if rsp.ret_code == 0:
             LOG("predict succ ret: {} request_id: {} pred: {} err: {}".format(
                 rsp.ret_code, rsp.request_id, rsp.pred_rsp.value, rsp.err_msg))
         else:
             LOG("predict failed ret: {} err: {}".format(
-                rsp.ret_code, rsp.err_msg.encode('utf-8')))
+                rsp.ret_code, rsp.err_msg))
             if rsp.ret_code == 4003:
-                #lack of money
+                # lack of money
                 LOG("cust_val <= 0 lack of money, please charge immediately")
         return rsp
 
@@ -205,10 +189,10 @@ class FateadmApi():
     #   rsp.pred_rsp.value：识别结果
     #   rsp.err_msg：异常时返回异常详情
     #
-    def PredictFromFile(self, pred_type, file_name):
+    def PredictFromFile(self, pred_type, file_name, head_info=""):
         with open(file_name, "rb") as f:
             data = f.read()
-        return self.Predict(pred_type, data)
+        return self.Predict(pred_type, data, head_info=head_info)
 
     #
     # 识别失败，进行退款请求
@@ -277,7 +261,7 @@ class FateadmApi():
     # 参数：cardid：充值卡号  cardkey：充值卡签名串
     # 返回值： 充值成功时返回0
     ##
-    def ChargeExtend(self, cardid, cardkey):
+    def ExtendCharge(self, cardid, cardkey):
         return self.Charge(cardid, cardkey).ret_code
 
     ##
@@ -307,8 +291,8 @@ class FateadmApi():
     # 参数：pred_type;识别类型  file_name:文件名
     # 返回值： rsp.pred_rsp.value：识别的结果
     ##
-    def PredictFromFileExtend(self, pred_type, file_name):
-        rsp = self.PredictFromFile(pred_type, file_name)
+    def PredictFromFileExtend(self, pred_type, file_name, head_info=""):
+        rsp = self.PredictFromFile(pred_type, file_name, head_info)
         return rsp.pred_rsp.value
 
     ##
@@ -316,36 +300,30 @@ class FateadmApi():
     # 参数：pred_type:识别类型  img_data:图片的数据
     # 返回值： rsp.pred_rsp.value：识别的结果
     ##
-    def PredictExtend(self, pred_type, img_data):
-        rsp = self.Predict(pred_type, img_data)
+    def PredictExtend(self, pred_type, img_data, head_info=""):
+        rsp = self.Predict(pred_type, img_data, head_info)
         return rsp.pred_rsp.value
 
 
 def TestFunc():
-    # pd账号秘钥，请在用户中心页获取
-    pd_id = "100000"
-    pd_key = "123456"
-    app_id = "100001"
-    app_key = "123456"
+    # 识别类型，
     # 具体类型可以查看官方网站的价格页选择具体的类型，不清楚类型的，可以咨询客服
     pred_type = "30400"
-    # 初始化api接口
-    api = FateadmApi(app_id, app_key, pd_id, pd_key)
-    #查询余额接口
+    api = FateadmApi()
+    # 查询余额
     balance = api.QueryBalcExtend()  # 直接返余额
+    print(balance)
     # api.QueryBalc()
 
-    #通过文件识别验证码
-    #通过文件进行验证码识别,请使用自己的图片文件替换
-    # 如果是通过url直接获取内存图片，这直接调用 Predict接口就好
+    # 通过文件形式识别：
     file_name = "img.jpg"
-    # res =  api.PredictFromFileExtend(pred_type,file_name)  	# 直接返回识别结果
     # 多网站类型时，需要增加src_url参数，具体请参考api文档: http://docs.fateadm.com/web/#/1?page_id=6
-    rsp = api.PredictFromFile(pred_type, file_name)  # 返回识别结果的详细信息
+    # result =  api.PredictFromFileExtend(pred_type,file_name)   # 直接返回识别结果
+    rsp = api.PredictFromFile(pred_type, file_name)  # 返回详细识别结果
     '''
     # 如果不是通过文件识别，则调用Predict接口：
-    # res =  api.PredictExtend(pred_type,data)  	# 直接返回识别结果
-    rsp             = api.Predict(pred_type,data) 	# 返回识别结果的详细信息
+    # result 			= api.PredictExtend(pred_type,data)   	# 直接返回识别结果
+    rsp             = api.Predict(pred_type,data)				# 返回详细的识别结果
     '''
 
     just_flag = False
@@ -355,7 +333,12 @@ def TestFunc():
             # 退款仅在正常识别出结果后，无法通过网站验证的情况，请勿非法或者滥用，否则可能进行封号处理
             api.Justice(rsp.request_id)
 
+    # card_id         = "123"
+    # card_key        = "123"
+    # 充值
+    # api.Charge(card_id, card_key)
     LOG("print in testfunc")
 
-    if __name__ == "__main__":
-        TestFunc()
+
+if __name__ == "__main__":
+    TestFunc()
