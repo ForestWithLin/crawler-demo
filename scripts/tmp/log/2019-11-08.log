@@ -1,0 +1,3 @@
+[crawler] 2019-11-08 10:58:23 INFO [23520] GovZhiXingCrawler | 初始化执行信息网爬虫对象。。。
+[crawler] 2019-11-08 10:58:23 INFO [23520] GovZhiXingCrawler | 获取的captchaId:ec832404d17b4bceb22ccbc2e8358514
+[crawler] 2019-11-08 10:58:23 INFO [23520] GovZhiXingCrawler | 获取的访问图形验证码Url:captcha.do?captchaId=ec832404d17b4bceb22ccbc2e8358514&random=0.7535975848778623
