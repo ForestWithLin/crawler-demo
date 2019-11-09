@@ -87,6 +87,26 @@ class GovZhiXingCrawler:
         self.currentPage = self.currentPage + 1
         self.do_items_page()
 
+        def do_detail_page(self, item):
+            # 查询明细页面
+            detailData = {
+                'pnameNewDel': self.pName,
+                'cardNumNewDel': self.pCardNum,
+                'j_captchaNewDel': self.pCode,
+                'caseCodeNewDel': self.captchaId,
+                'captchaIdNewDel': item['caseCode']
+            }
+            detailHtml = self.httpClint.send(self.urls['doDetail'], detailData)
+            print(detailHtml)
+            detailSoup = BeautifulSoup(detailHtml, 'html.parser')
+            pnameDetail = detailSoup.select(id='pnameDetail')  # 被执行人姓名/名称
+            partyCardNumDetail = detailSoup.select(id='partyCardNumDetail')  # 身份证号码/组织机构代码
+            Detail = detailSoup.select(id='Detail')  # 性别
+            execCourtNameDetail = detailSoup.select(id='execCourtNameDetail')  # 执行法院
+            caseCreateTimeDetail = detailSoup.select(id='caseCreateTimeDetail')  # 立案时间
+            caseCodeDetail = detailSoup.select(id='caseCodeDetail')  # 案号
+            execMoneyDetail = detailSoup.select(id='execMoneyDetail')  # 执行标的
+
 
 if __name__ == '__main__':
     text = GovZhiXingCrawler('王思聪', '', False)
