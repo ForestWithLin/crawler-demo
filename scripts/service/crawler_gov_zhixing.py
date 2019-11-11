@@ -61,7 +61,6 @@ class GovZhiXingCrawler:
         imgContent = self.httpClint.send(self.urls['captcha_zhixing'])
         # 初始化斐斐打码api接口
         api = fateadm_api.FateadmApi()
-        print(type(imgContent))
         validCode = api.PredictExtend('30400', imgContent)
         logger.info('获取的图形验证码：%s', validCode)
         self.pCode = validCode
@@ -89,10 +88,10 @@ class GovZhiXingCrawler:
             return
 
         # 保存items数据
-        zhixingDetails = []
+        zhiXingDetails = []
         for item in items:
-            zhixingDetails.append(self.do_detail_page(item))
-        self.save_data(zhixingDetails)
+            zhiXingDetails.append(self.do_detail_page(item))
+        self.save_data(zhiXingDetails)
 
         # 执行翻页操作
         self.currentPage = self.currentPage + 1
@@ -106,19 +105,25 @@ class GovZhiXingCrawler:
             'captchaId': self.captchaId,
             '_': '1573458252888'
         }
-        detailJson = self.httpClint.send(self.urls['doDetail_zhixing'], detailData)
+        detailJson = self.httpClint.send(self.urls['doDetail_zhixing'],
+                                         detailData)
         return detailJson
 
-    def save_data(self, zhixingDetails=[]):
+    def save_data(self, zhiXingDetails=[]):
         # 保存数据
         collection = self.mongoClint.get_collection('rcsys')
+        # 查询条件
+        query = {'name': self.pName, 'cardNo': self.pCardNum}
+        # 更新或插入数据
         data = {
-            'name': self.pName,
-            'cardNo': self.pCardNum,
-            'qryTime': sys_util.getTodayTimeStr(),
-            'zhixingDetails': zhixingDetails
+            '$set': {
+                'name': self.pName,
+                'cardNo': self.pCardNum,
+                'qryTime': sys_util.getTodayTimeStr(),
+                'zhiXingDetails': zhiXingDetails
+            }
         }
-        collection.insert_one(data)
+        collection.update_one(query, data, upsert=True)  # 更新或插入数据
         logger.info('保存数据成功')
 
 
