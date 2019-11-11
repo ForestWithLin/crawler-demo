@@ -1,5 +1,4 @@
 import os
-import time
 import logging
 from logging import StreamHandler
 from logging import FileHandler
@@ -40,13 +39,9 @@ class LogHandler(logging.Logger):
         if to_stream:
             self.__setSteamHandler__()
 
-    def getTodayDateStr(self):
-        return time.strftime("%Y-%m-%d",
-                             time.localtime(sys_util.getNowTimestamp()))
-
     def getLogFile(self):
         # 设置文件名称
-        todayStr = self.getTodayDateStr()
+        todayStr = sys_util.getTodayDateStr()
         rtn = os.path.join(sys_util.getLogDir(), todayStr)
         if self._suffix:
             rtn += "_" + self._suffix

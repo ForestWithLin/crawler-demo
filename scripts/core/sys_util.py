@@ -8,6 +8,16 @@ def getNowTimestamp():
     return time.time()
 
 
+def getTodayDateStr():
+    """获取当前日期"""
+    return time.strftime("%Y-%m-%d", time.localtime(getNowTimestamp()))
+
+
+def getTodayTimeStr():
+    """获取当前时间"""
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(getNowTimestamp()))
+
+
 def decMakeDir(func):
     """根据判断是否生成文件"""
     def handleFunc(*args, **kwargs):

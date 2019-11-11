@@ -1,10 +1,10 @@
 """
-国家执行网址
+国家执行信息网址配置
 """
 
 urls = {
-    "main": {  # 查询首页
-        "req_url": "/zhzxgk/",
+    "main_zhixing": {  # 查询执行人首页
+        "req_url": "/zhixing/",
         "req_type": "get",
         "Referer": "http://zxgk.court.gov.cn/",
         "Host": "zxgk.court.gov.cn",
@@ -16,10 +16,10 @@ urls = {
         "is_logger": False,
         "is_json": False,
     },
-    "captcha": {  # 校验验证码
-        "req_url": "/zhzxgk/",
+    "captcha_zhixing": {  # 查询执行人校验验证码
+        "req_url": "/zhixing/",
         "req_type": "post",
-        "Referer": "http://zxgk.court.gov.cn/zhzxgk/",
+        "Referer": "http://zxgk.court.gov.cn/zhixing/",
         "Host": "zxgk.court.gov.cn",
         "Content-Type": 1,
         "not_decode": True,
@@ -30,10 +30,10 @@ urls = {
         "is_logger": False,
         "is_json": False,
     },
-    "doQry": {  # 点击查询
-        "req_url": "/zhzxgk/searchZhcx.do",
+    "doQry_zhixing": {  # 点击查询
+        "req_url": "/zhixing/searchBzxr.do",
         "req_type": "post",
-        "Referer": "http://zxgk.court.gov.cn/zhzxgk/",
+        "Referer": "http://zxgk.court.gov.cn/zhixing/",
         "Host": "zxgk.court.gov.cn",
         "Content-Type": 1,
         "httpType": "http",
@@ -43,18 +43,18 @@ urls = {
         "is_logger": True,
         "is_json": True,
     },
-    "doDetail": {  # 明细页面
-        "req_url": "/zhzxgk/detailZhcx.do",
+    "doDetail_zhixing": {  # 点击查询
+        "req_url": "/zhixing/newdetail",
         "req_type": "post",
-        "Referer": "http://zxgk.court.gov.cn/zhzxgk/",
+        "Referer": "http://zxgk.court.gov.cn/zhixing/",
         "Host": "zxgk.court.gov.cn",
         "Content-Type": 1,
         "httpType": "http",
         "re_try": 10,
         "re_time": 1,
         "s_time": 0.1,
-        "is_logger": False,
-        "is_json": False,
+        "is_logger": True,
+        "is_json": True,
     }
 
 }

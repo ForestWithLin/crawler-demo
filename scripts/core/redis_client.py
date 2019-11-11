@@ -41,4 +41,3 @@ if __name__ == '__main__':
     # redisClient.set('sss', '123')
     print(redisClient.get('"wx09c0fa82061ee760_key_base_access_token"'))
     print(redisClient.get('sss'))
-
