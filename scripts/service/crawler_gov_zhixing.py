@@ -80,14 +80,20 @@ class GovZhiXingCrawler:
             'captchaId': self.captchaId
         }
         listJson = self.httpClint.send(self.urls['doQry_zhixing'], qryData)
-        print(listJson)
         items = listJson[0]['result']
         itemsLen = len(items)
         logger.info('当前页面：%d,获取列表数量：%d', self.currentPage, itemsLen)
         if itemsLen <= 0:
             # 没有下页数据跳出
-            logger.info('无数据')
+            logger.info('无数据，结束当前爬取操作...')
             return
+
+        # 保存items数据
+        zhixingDetails = []
+        for item in items:
+            zhixingDetails.append(self.do_detail_page(item))
+        self.save_data(zhixingDetails)
+
         # 执行翻页操作
         self.currentPage = self.currentPage + 1
         self.do_items_page()
@@ -95,30 +101,22 @@ class GovZhiXingCrawler:
     def do_detail_page(self, item):
         # 查询明细页面
         detailData = {
-            'pnameNewDel': self.pName,
-            'cardNumNewDel': self.pCardNum,
-            'j_captchaNewDel': self.pCode,
-            'caseCodeNewDel': self.captchaId,
-            'captchaIdNewDel': item['caseCode']
+            'id': item['id'],
+            'j_captcha': self.pCode,
+            'captchaId': self.captchaId,
+            '_': '1573458252888'
         }
-        detailHtml = self.httpClint.send(self.urls['doDetail_zhixing'], detailData)
-        print(detailHtml)
-        # detailSoup = BeautifulSoup(detailHtml, 'html.parser')
-        # pname = detailSoup.select(id='pnameDetail')  # 被执行人姓名/名称
-        # partyCardNum = detailSoup.select(id='partyCardNumDetail')  # 身份证号码/组织机构代码
-        # sexname = detailSoup.select(id='Detail')  # 性别
-        # execCourtName = detailSoup.select(id='execCourtNameDetail')  # 执行法院
-        # caseCreateTime = detailSoup.select(id='caseCreateTimeDetail')  # 立案时间
-        # caseCode = detailSoup.select(id='caseCodeDetail')  # 案号
-        # execMoney = detailSoup.select(id='execMoneyDetail')  # 执行标的
+        detailJson = self.httpClint.send(self.urls['doDetail_zhixing'], detailData)
+        return detailJson
 
-    def save_data(self):
+    def save_data(self, zhixingDetails=[]):
         # 保存数据
         collection = self.mongoClint.get_collection('rcsys')
         data = {
             'name': self.pName,
             'cardNo': self.pCardNum,
-            'qryTime': sys_util.getTodayTimeStr()
+            'qryTime': sys_util.getTodayTimeStr(),
+            'zhixingDetails': zhixingDetails
         }
         collection.insert_one(data)
         logger.info('保存数据成功')
