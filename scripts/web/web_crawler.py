@@ -4,6 +4,7 @@
 """
 from flask import Blueprint, request
 from scripts.service import crawler_gov_zhixing
+# 定义flask的蓝图
 crawler = Blueprint('crawler', __name__)
 
 

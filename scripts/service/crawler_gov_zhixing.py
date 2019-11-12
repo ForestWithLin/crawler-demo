@@ -1,7 +1,7 @@
 # encoding:utf-8
 """
 爬取中国执行信息公开网数据（个人/企业）
-http://zxgk.court.gov.cn/zhzxgk/
+http://zxgk.court.gov.cn/zhixing/
 """
 import copy
 from bs4 import BeautifulSoup
@@ -39,6 +39,7 @@ class GovZhiXingCrawler:
         self.searchCourtName = '全国法院（包含地方各级法院）'
         self.selectCourtArrange = '1'
         self.currentPage = 1  # 查询开始页数
+        self.zhiXingDetails = []  # items明细数据
         self.httpClint = http_client.HTTPClient()  # http工具
         self.httpClint.setHeaders(_set_header_default())
         self.mongoClint = mongo_client.mongoHandler()  # mongo工具
@@ -85,13 +86,12 @@ class GovZhiXingCrawler:
         if itemsLen <= 0:
             # 没有下页数据跳出
             logger.info('无数据，结束当前爬取操作...')
+            self.save_data(self.zhiXingDetails)
             return
 
-        # 保存items数据
-        zhiXingDetails = []
+        # 获取items明细数据
         for item in items:
-            zhiXingDetails.append(self.do_detail_page(item))
-        self.save_data(zhiXingDetails)
+            self.zhiXingDetails.append(self.do_detail_page(item))
 
         # 执行翻页操作
         self.currentPage = self.currentPage + 1
@@ -128,5 +128,5 @@ class GovZhiXingCrawler:
 
 
 if __name__ == '__main__':
-    text = GovZhiXingCrawler('王思聪', '', False)
+    text = GovZhiXingCrawler('湖南华诚置业开发有限公司', '', True)
     text.do_main_page()
