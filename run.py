@@ -1,8 +1,4 @@
-from scripts.config import SysConfig
-import sys
+from scripts.web import app
 
-print(sys.path)
-
-d = SysConfig.SysConfig()
-
-print(d.getName())
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8081, debug=True)
